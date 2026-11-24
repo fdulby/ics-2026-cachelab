@@ -22,6 +22,42 @@ int is_mul(int M, int N, int A[N][M], int B[M][N], int C[N][N]);
 char mul_submit_desc[] = "Multiply submission";
 void mul_submit(int M, int N, int A[N][M], int B[M][N], int C[N][N])
 {
+    int sum[3][4];
+
+    for (int i = 0; i < N; i += 3) {
+        for (int j = 0; j + 3 < N; j += 4) {
+            for (int r = 0; r < 3; ++r) {
+                for (int c = 0; c < 4; ++c)
+                    sum[r][c] = 0;
+            }
+
+            for (int k = 0; k < M; ++k) {
+                /* Read B before touching A, which may share its cache set. */
+                int b0 = B[k][j], b1 = B[k][j + 1];
+                int b2 = B[k][j + 2], b3 = B[k][j + 3];
+                for (int r = 0; r < 3 && i + r < N; ++r) {
+                    sum[r][0] += A[i + r][k] * b0;
+                    sum[r][1] += A[i + r][k] * b1;
+                    sum[r][2] += A[i + r][k] * b2;
+                    sum[r][3] += A[i + r][k] * b3;
+                }
+            }
+
+            for (int r = 0; r < 3 && i + r < N; ++r) {
+                for (int c = 0; c < 4; ++c)
+                    C[i + r][j + c] = sum[r][c];
+            }
+        }
+    }
+
+    for (int i = 0; i < N; ++i) {
+        for (int j = N - N % 4; j < N; ++j) {
+            sum[0][0] = 0;
+            for (int k = 0; k < M; ++k)
+                sum[0][0] += A[i][k] * B[k][j];
+            C[i][j] = sum[0][0];
+        }
+    }
 }
 
 /*
